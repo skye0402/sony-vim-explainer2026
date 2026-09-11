@@ -1,0 +1,16 @@
+apiVersion: gateway.kyma-project.io/v2
+kind: APIRule
+metadata:
+  name: explainer
+spec:
+  gateway: kyma-system/kyma-gateway
+  hosts:
+    - sony-vim-explainer.a549aaa.kyma.ondemand.com
+  service:
+    name: explainer
+    port: 80
+  rules:
+    # The login is enforced by nginx basic auth inside the pod.
+    - path: /*
+      methods: ["GET", "HEAD"]
+      noAuth: true

@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: explainer
+  labels:
+    app: explainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: explainer
+  template:
+    metadata:
+      labels:
+        app: explainer
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.30.4-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: site
+              mountPath: /usr/share/nginx/html
+              readOnly: true
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: htpasswd
+              mountPath: /etc/nginx/auth
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: site
+          configMap:
+            name: explainer-site
+        - name: nginx-conf
+          configMap:
+            name: explainer-nginx
+        - name: htpasswd
+          secret:
+            secretName: explainer-htpasswd
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: explainer
+  labels:
+    app: explainer
+spec:
+  selector:
+    app: explainer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,25 @@
+# Deploy to SAP BTP Kyma: kubectl apply -k .
+# Requires k8s/htpasswd (gitignored), see README.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sony-vim-explainer
+
+resources:
+  - k8s/namespace.yaml
+  - k8s/deployment.yaml
+  - k8s/apirule.yaml
+
+# Content changes produce a new ConfigMap name, which rolls the pod automatically.
+configMapGenerator:
+  - name: explainer-site
+    files:
+      - architecture/sony-invoice-explainer.html
+      - architecture/architecture.html
+  - name: explainer-nginx
+    files:
+      - nginx.conf=k8s/nginx.conf
+
+secretGenerator:
+  - name: explainer-htpasswd
+    files:
+      - htpasswd=k8s/htpasswd

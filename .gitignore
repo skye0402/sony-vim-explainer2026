@@ -1,2 +1,5 @@
 docs/
 tmp/
+k8s/htpasswd
+k8s/credentials.txt
+node_modules/
